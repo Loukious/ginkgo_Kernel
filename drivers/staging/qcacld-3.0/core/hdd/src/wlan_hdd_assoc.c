@@ -1318,7 +1318,7 @@ static void hdd_send_ft_event(struct hdd_adapter *adapter)
 		return;
 
 	/* Sme needs to send the RIC IEs first */
-	str_len = strlcpy(buff, "RIC=", IW_CUSTOM_MAX);
+	str_len = strscpy(buff, "RIC=", IW_CUSTOM_MAX);
 	sme_get_rici_es(mac_handle, adapter->vdev_id,
 			(u8 *) &(buff[str_len]), (IW_CUSTOM_MAX - str_len),
 			&ric_ies_length);
@@ -1331,7 +1331,7 @@ static void hdd_send_ft_event(struct hdd_adapter *adapter)
 
 	/* Sme needs to provide the Auth Resp */
 	qdf_mem_zero(buff, IW_CUSTOM_MAX);
-	str_len = strlcpy(buff, "AUTH=", IW_CUSTOM_MAX);
+	str_len = strscpy(buff, "AUTH=", IW_CUSTOM_MAX);
 	sme_get_ft_pre_auth_response(mac_handle, adapter->vdev_id,
 				     (u8 *) &buff[str_len],
 				     (IW_CUSTOM_MAX - str_len), &auth_resp_len);
@@ -1442,7 +1442,7 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 	if (!buff)
 		return;
 
-	strLen = strlcpy(buff, "BEACONIEs=", IW_CUSTOM_MAX);
+	strLen = strscpy(buff, "BEACONIEs=", IW_CUSTOM_MAX);
 	currentLen = strLen + 1;
 
 	totalIeLen = roam_info->nBeaconLength - BEACON_FRAME_IES_OFFSET;
@@ -2419,7 +2419,7 @@ static void hdd_send_roamed_ind(struct net_device *dev,
 {
 	struct cfg80211_roam_info info = {0};
 
-	info.bss = bss;
+	info.links[0].bss = bss;
 	info.req_ie = req_ie;
 	info.req_ie_len = req_ie_len;
 	info.resp_ie = resp_ie;
@@ -3716,6 +3716,25 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				 adapter->vdev_id,
 				 QDF_MAC_ADDR_REF(sta_ctx->requested_bssid.bytes),
 				 roam_result, roam_status);
+		if (roam_info) {
+			hdd_nofl_info("%s(vdevid-%d): assoc failure detail reason:%u status_code:%u is_fils:%u pbFrames:%pK req_len:%u rsp_len:%u bcn_len:%u disconn_in_prog:%u connect_req_status:%u",
+				      dev->name, adapter->vdev_id,
+				      roam_info->reasonCode,
+				      roam_info->status_code,
+				      roam_info->is_fils_connection,
+				      roam_info->pbFrames,
+				      roam_info->nAssocReqLength,
+				      roam_info->nAssocRspLength,
+				      roam_info->nBeaconLength,
+				      hddDisconInProgress,
+				      adapter->connect_req_status);
+		} else {
+			hdd_nofl_info("%s(vdevid-%d): assoc failure detail roam_info NULL disconn_in_prog:%u connect_req_status:%u requested_bssid:" QDF_MAC_ADDR_FMT,
+				      dev->name, adapter->vdev_id,
+				      hddDisconInProgress,
+				      adapter->connect_req_status,
+				      QDF_MAC_ADDR_REF(sta_ctx->requested_bssid.bytes));
+		}
 
 		if ((eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE == roam_result) ||
 		   (roam_info &&
@@ -4905,6 +4924,22 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (roam_info) {
+		hdd_nofl_info("%s(vdevid-%d): roam cb status:%d result:%d id:%u reason:%u status_code:%u bssid:" QDF_MAC_ADDR_FMT " req_len:%u rsp_len:%u conn_state:%d",
+			      adapter->dev ? adapter->dev->name : "null",
+			      adapter->vdev_id, roam_status, roam_result,
+			      roam_id, roam_info->reasonCode,
+			      roam_info->status_code,
+			      QDF_MAC_ADDR_REF(roam_info->bssid.bytes),
+			      roam_info->nAssocReqLength,
+			      roam_info->nAssocRspLength,
+			      sta_ctx->conn_info.conn_state);
+	} else {
+		hdd_nofl_info("%s(vdevid-%d): roam cb status:%d result:%d id:%u roam_info is NULL conn_state:%d",
+			      adapter->dev ? adapter->dev->name : "null",
+			      adapter->vdev_id, roam_status, roam_result,
+			      roam_id, sta_ctx->conn_info.conn_state);
+	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_RX_SME_MSG,
 				 adapter->vdev_id, roam_status));
@@ -4984,6 +5019,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 					WLAN_CONTROL_PATH);
 			break;
 		}
+		/* fall through */
 	case eCSR_ROAM_DISASSOCIATED:
 	{
 		hdd_debug("****eCSR_ROAM_DISASSOCIATED****");
@@ -5031,7 +5067,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		break;
 	case eCSR_ROAM_CANCELLED:
 		hdd_debug("****eCSR_ROAM_CANCELLED****");
-		/* fallthrough */
+		/* fall through */
 	case eCSR_ROAM_ASSOCIATION_FAILURE:
 		qdf_ret_status = hdd_association_completion_handler(adapter,
 								    roam_info,
