@@ -16,6 +16,7 @@
 #include <linux/skbuff.h>
 #include <linux/if_arp.h>
 #include <linux/timer.h>
+#include <linux/ktime.h>
 #include <linux/rtnetlink.h>
 
 #include <net/codel.h>

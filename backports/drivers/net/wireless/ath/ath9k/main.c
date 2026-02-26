@@ -16,6 +16,7 @@
 
 #include <linux/nl80211.h>
 #include <linux/delay.h>
+#include <linux/ktime.h>
 #include "ath9k.h"
 #include "btcoex.h"
 

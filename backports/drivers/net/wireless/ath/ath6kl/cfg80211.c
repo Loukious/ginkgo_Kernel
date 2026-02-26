@@ -19,6 +19,7 @@
 
 #include <linux/moduleparam.h>
 #include <linux/inetdevice.h>
+#include <linux/etherdevice.h>
 #include <linux/export.h>
 #include <linux/sched/signal.h>
 
@@ -4037,4 +4038,3 @@ void ath6kl_cfg80211_destroy(struct ath6kl *ar)
 
 	wiphy_free(ar->wiphy);
 }
-

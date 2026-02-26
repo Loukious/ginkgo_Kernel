@@ -4,12 +4,11 @@
 #include <linux/version.h>
 #include <linux/property.h>
 
-/* This was backported to 4.19.291, but we do not support such high minor numbers use 255 instead. */
+/* This was backported to stable trees, but many vendor kernels still miss it. */
 #if LINUX_VERSION_IS_LESS(5,15,0) &&			\
 	!LINUX_VERSION_IN_RANGE(5,10,188, 5,11,0) &&	\
 	!LINUX_VERSION_IN_RANGE(5,4,251, 5,5,0) &&	\
-	!LINUX_VERSION_IN_RANGE(4,19,255, 4,20,0) &&	\
-	!LINUX_VERSION_IN_RANGE(4,14,90, 4,15,0)
+	!LINUX_VERSION_IN_RANGE(4,19,255, 4,20,0)
 /**
  * eth_hw_addr_set - Assign Ethernet address to a net_device
  * @dev: pointer to net_device structure
